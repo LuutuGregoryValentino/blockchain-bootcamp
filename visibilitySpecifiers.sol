@@ -1,65 +1,88 @@
-//SPDX-License-Identifier:MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 contract BaseContract{
-    //BaseContract:Demonstrates internal visibilty for inheritance
-    uint internal _sharedData = 100; //internal state variable
+    uint internal _sharedData = 100;
 
-
-    function _increaseSharedData(uint _amount) internal {
-        //accesible within BaseContract and contracts inheriting from it
-        _sharedData +=_amount;
+    function _increaseSharedData(uint _amount) internal{
+        _sharedData+=_amount;
     }
-
-    function getSharedData() public view returns(uint){
-        //public getter for _sharedData
+    
+    function getSharedData()public view returns(uint){
         return _sharedData;
     }
 }
 
-contract FunctionVisibilityExamples is BaseContract{
-    //public state function auto get a public getter func.
+contract AllSolidityFeautures is BaseContract{
     uint public publicCounter=0;
-
-    //only available within this contract
     uint private _privateCounter=0;
+    address public contractOwner;//new state variable to store deployer
 
-    //public---can be called by everyone
+    //constructor: A special function that only runs once when the contract is deplyed
+    //its often used to initialize state variables
+    constructor(){
+        contractOwner = msg.sender;//the address of he who deployed the contract
+    }
+
     function incrementPublicCounter(uint _amount) public{
-        publicCounter +=_amount;
+        publicCounter += _amount;
         _incrementPrivateCounter(_amount);
-        _increaseSharedData(_amount);
+        _increaseSharedData(_amount);//calls internal form basecontract
     }
-
-    //private--- only within this contract
     function _incrementPrivateCounter(uint _amount) private{
-        _privateCounter+=_amount;
+        _privateCounter += _amount;
     }
-
-    //public getter for the private counter
-    function getPrivateCounter() public view returns (uint){
+    function getPrivateCounter() public view returns(uint){
         return _privateCounter;
     }
 
-    //internal---within this contact and all that inherit from it
-    function _logActivity(string memory _message) internal pure{
-        //in a real ocntract we can emit an event or update an internal log
+    function _logActivity(string memory _message)internal pure{
+        //where we shall emit an event in later contracts just showing internal logic for now
     }
-    function doSomethingAndLog(string memory _action) public pure {
-        //call the internla func.
+    function doSomethingAndLog(string memory _action)public pure{
+        //calls the internal pure function
         _logActivity(_action);
-        //rest of the logic
+        ///...rest of the logic...
     }
 
-    //external functions-- anyone else not connected to this contract unless this.funcname() is used
-    function externalOnlyFunc(uint _value) external {
-                //designed to be an entry point for external calls
-        publicCounter +=_value;
-        //usually private and internal func arent called from an external func unless it spart of the external inetractions ineternal logic
-        _logActivity("External fucntion called");
+    function externalOnlyFunc(uint _value) external{
+        publicCounter += _value;
+        _logActivity("External function called");
     }
-    function getInheritedSharedData() public view returns (uint){
-        return _sharedData; //accessible because sharedData is internal in baseContract
+    
+
+    function getInheritedSharedData()public view returns(uint){
+        return _sharedData;
     }
 
+
+
+    //viewfunction
+    function getOwner() public view returns(address){
+        return contractOwner;
+    }
+    
+    //purefucntion
+    function multiply(uint _a, uint _b) public pure returns (uint){
+        return _a*_b;
+    }
+
+    //payablefunction
+    function receiveFunds()public payable{
+        //allows anyone to send ethher to this contract
+        //msg.value is the amount of ether send in wei
+        //we could lof if or update a balacne mapping here, e.g.:
+        //balances[msg,sender]+=msg.value;
+    }
+    
+    //function to check the contracts current ether balance(uselful after receiving funds)
+    function getContractBalance()public view  returns(uint){
+        return address(this).balance; //"address(this)"...the contracts own address
+
+    }
+    
+    //example of a function that is not payable but modifies state(costs gas)
+    function resetCounter() public{
+        publicCounter = 0; //modifies state
+    }
 }
